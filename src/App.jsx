@@ -1,35 +1,55 @@
 import './App.css';
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 function App() {
 
-  const [strava, setStrava] = useState(null);
-
+  const [athleteData, setAthleteData] = useState(null);
+  const [code, setCode] = useState(null);
   
-  const fetchStrava = async () => {
+  const handleAuthStrava = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/strava"
+        "http://localhost:5000/auth/strava"
+      );
+      console.log(response);
+      const data = await response.json();
+      setCode(data.access_token);
+      window.location.href = response.data.redirectUrl;
+    } catch (error) {
+      console.error("Error initiating Strava authentication:", error.message);
+    }
+  };
+
+  const fetchDataFromStrava = async () => { 
+    try {
+      const response = await fetch(
+        "http://localhost:5000/strava", {
+          params: {
+            code: code,
+          }
+        }
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(`Error fetching data from Strava: ${response.status}`);
       } else {
         const data = await response.json();
-        setStrava(data);
+        setAthleteData(data);
       }
     } catch (error) {
       console.error("Error fetching data:", error.message);
     }
-  };
+  }
 
-  useEffect(() => { fetchStrava(); }, []);
+  // useEffect(() => { handleAuthStrava(); }, []);
 
   return (
     <>
      
       <h1>Vite + React</h1>
-      <h2>{JSON.stringify(strava)}</h2>
+      <button onClick={handleAuthStrava}>Authorize Strava</button>
+      <button onClick={fetchDataFromStrava}>Fetch Data</button>
+      <h2>{JSON.stringify(athleteData)}</h2>
       
     </>
   )
